@@ -52,6 +52,7 @@ const VideoCall = () => {
 
     const location = useLocation();
     const { sender, receiver } = location.state || {};
+    console.log("Call initiated from:", sender, "to:", receiver);
 
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
@@ -89,12 +90,19 @@ const VideoCall = () => {
                 // Initialize audio level monitoring
                 initializeAudioLevel(stream);
 
+                // Add TURN server for production reliability
                 const peer = new Peer(undefined, {
                     config: {
                         iceServers: [
                             { urls: 'stun:stun.l.google.com:19302' },
                             { urls: 'stun:stun1.l.google.com:19302' },
-                            { urls: 'stun:stun2.l.google.com:19302' }
+                            { urls: 'stun:stun2.l.google.com:19302' },
+                            // Example public TURN server (replace with your own for production)
+                            {
+                                urls: 'turn:openrelay.metered.ca:80',
+                                username: 'openrelayproject',
+                                credential: 'openrelayproject'
+                            }
                         ]
                     },
                     debug: 2
@@ -113,13 +121,32 @@ const VideoCall = () => {
                             remoteVideoRef.current.srcObject = remoteStream;
                         }
                     });
+                    call.on("close", () => {
+                        toast("Remote user left the call");
+                        endCall();
+                    });
+                    call.on("error", (err) => {
+                        toast.error("Call error: " + err.message);
+                        endCall();
+                    });
                     callInstance.current = call;
                     setIsConnecting(false);
+                });
+
+                peer.on("disconnected", () => {
+                    toast.error("Peer disconnected");
+                    setIsConnecting(true);
+                });
+
+                peer.on("close", () => {
+                    toast("Call closed");
+                    endCall();
                 });
 
                 peer.on("error", (error) => {
                     console.error("Peer error:", error);
                     toast.error("Connection error occurred");
+                    endCall();
                 });
 
                 socket.on("remote-peer-id", (remotePeerId) => {
@@ -129,6 +156,14 @@ const VideoCall = () => {
                         if (remoteVideoRef.current) {
                             remoteVideoRef.current.srcObject = remoteStream;
                         }
+                    });
+                    call.on("close", () => {
+                        toast("Remote user left the call");
+                        endCall();
+                    });
+                    call.on("error", (err) => {
+                        toast.error("Call error: " + err.message);
+                        endCall();
                     });
                     callInstance.current = call;
                     setIsConnecting(false);
@@ -163,6 +198,13 @@ const VideoCall = () => {
             if (durationInterval.current) {
                 clearInterval(durationInterval.current);
             }
+            // Clean up PeerJS and media tracks
+            if (callInstance.current) callInstance.current.close();
+            if (screenCallInstance.current) screenCallInstance.current.close();
+            if (peerInstance.current) peerInstance.current.destroy();
+            if (localStream) localStream.getTracks().forEach(track => track.stop());
+            if (screenStream) screenStream.getTracks().forEach(track => track.stop());
+            if (audioContext.current) audioContext.current.close();
         };
     }, []);
 
@@ -279,42 +321,23 @@ const VideoCall = () => {
     };
 
     const endCall = () => {
-        socket.emit("end-call", { sender, receiver });
+    socket.emit("end-call", { sender, receiver });
 
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-        }
+    // Clean up all resources
+    if (localStream) localStream.getTracks().forEach(track => track.stop());
+    if (screenStream) screenStream.getTracks().forEach(track => track.stop());
+    if (audioContext.current) audioContext.current.close();
+    if (localVideoRef.current) localVideoRef.current.srcObject = null;
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+    if (screenVideoRef.current) screenVideoRef.current.srcObject = null;
+    if (callInstance.current) callInstance.current.close();
+    if (screenCallInstance.current) screenCallInstance.current.close();
+    if (peerInstance.current) peerInstance.current.destroy();
+    if (durationInterval.current) clearInterval(durationInterval.current);
 
-        if (screenStream) {
-            screenStream.getTracks().forEach(track => track.stop());
-        }
-
-        if (audioContext.current) {
-            audioContext.current.close();
-        }
-
-        if (localVideoRef.current) localVideoRef.current.srcObject = null;
-        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
-        if (screenVideoRef.current) screenVideoRef.current.srcObject = null;
-
-        if (callInstance.current) {
-            callInstance.current.close();
-        }
-
-        if (screenCallInstance.current) {
-            screenCallInstance.current.close();
-        }
-
-        if (peerInstance.current) {
-            peerInstance.current.destroy();
-        }
-
-        if (durationInterval.current) {
-            clearInterval(durationInterval.current);
-        }
-
-        toast.success("Call ended");
-        navigate(-1);
+    setIsConnecting(false);
+    toast.success("Call ended");
+     navigate('/DashBoard');
     };
 
     const formatDuration = (seconds) => {

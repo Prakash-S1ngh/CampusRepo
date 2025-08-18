@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { 
-    Search, 
-    ArrowLeft, 
-    Video, 
-    Calendar, 
-    MoreVertical, 
-    Smile, 
-    Send, 
-    Paperclip, 
+import {
+    Search,
+    ArrowLeft,
+    Video,
+    Calendar,
+    MoreVertical,
+    Smile,
+    Send,
+    Paperclip,
     Image as ImageIcon,
     File,
     Phone,
@@ -54,7 +54,7 @@ const ChatApp = () => {
     const [pinnedMessages, setPinnedMessages] = useState([]);
     const [searchMessages, setSearchMessages] = useState("");
     const [showSearchResults, setShowSearchResults] = useState(false);
-    
+
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const typingTimeoutRef = useRef(null);
@@ -76,7 +76,7 @@ const ChatApp = () => {
                 // Determine user role and appropriate endpoint
                 const userRole = user?.role;
                 console.log("ChatApp - activeTab:", activeTab, "userRole:", userRole);
-                
+
                 if (activeTab === "friends") {
                     if (userRole === 'Alumni') {
                         endpoint = `${url}/alumni/v2/connections`;
@@ -127,7 +127,7 @@ const ChatApp = () => {
 
                 const response = await axios.get(endpoint, { withCredentials: true });
                 console.log("current tab ", response.data);
-                
+
                 // Handle different response formats
                 let users = [];
                 if (response.data.success) {
@@ -166,7 +166,7 @@ const ChatApp = () => {
                         }
                     }
                 }
-                
+
                 console.log("Loaded users:", users);
                 console.log("Sample user with messages:", users[0]);
                 setFriends(users);
@@ -191,16 +191,16 @@ const ChatApp = () => {
                 try {
                     setLoadingMessages(true);
                     let endpoint = `${API_URL}/messages?roomId=${roomId}`;
-                    
+
                     // Use faculty-specific endpoint if user is faculty
                     if (user?.role === 'Faculty') {
                         endpoint = `${url}/faculty/v2/messages/${recipientId}`;
                     }
-                    
+
                     console.log("Fetching messages from endpoint:", endpoint);
                     const response = await axios.get(endpoint, { withCredentials: true });
                     console.log("Messages response:", response.data);
-                    
+
                     if (user?.role === 'Faculty') {
                         setMessages(response.data.messages || []);
                     } else {
@@ -281,11 +281,11 @@ const ChatApp = () => {
 
     const handleTyping = (e) => {
         setMessage(e.target.value);
-        
+
         if (selectedFriend) {
-            socket.emit("typing", { 
-                sender: user._id, 
-                receiver: selectedFriend.userId 
+            socket.emit("typing", {
+                sender: user._id,
+                receiver: selectedFriend.userId
             });
         }
 
@@ -296,9 +296,9 @@ const ChatApp = () => {
 
         // Set new timeout
         typingTimeoutRef.current = setTimeout(() => {
-            socket.emit("stopTyping", { 
-                sender: user._id, 
-                receiver: selectedFriend.userId 
+            socket.emit("stopTyping", {
+                sender: user._id,
+                receiver: selectedFriend.userId
             });
         }, 1000);
     };
@@ -392,33 +392,33 @@ const ChatApp = () => {
     // WhatsApp-like features
     const initiateVideoCall = () => {
         if (!selectedFriend) return;
-        
+
         setCallStatus('calling');
         setShowVideoCall(true);
-        
-        // Emit video call signal
-        socket.emit('video-call', {
-            from: user._id,
-            to: selectedFriend.userId,
-            type: 'video'
+
+        navigate('/call', {
+            state: {
+                sender: user._id,
+                receiver: selectedFriend.userId
+            }
         });
-        
+
         toast.success('Initiating video call...');
     };
 
     const initiateVoiceCall = () => {
         if (!selectedFriend) return;
-        
+
         setCallStatus('calling');
         setShowVoiceCall(true);
-        
+
         // Emit voice call signal
         socket.emit('voice-call', {
             from: user._id,
             to: selectedFriend.userId,
             type: 'voice'
         });
-        
+
         toast.success('Initiating voice call...');
     };
 
@@ -426,13 +426,13 @@ const ChatApp = () => {
         setCallStatus('idle');
         setShowVideoCall(false);
         setShowVoiceCall(false);
-        
+
         // Emit end call signal
         socket.emit('end-call', {
             from: user._id,
             to: selectedFriend?.userId
         });
-        
+
         toast.info('Call ended');
     };
 
@@ -549,11 +549,10 @@ const ChatApp = () => {
                                 filteredFriends.map((friend) => (
                                     <div
                                         key={friend._id || friend.userId}
-                                        className={`flex items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                                            selectedFriend?._id === friend._id || selectedFriend?.userId === friend.userId
+                                        className={`flex items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors ${selectedFriend?._id === friend._id || selectedFriend?.userId === friend.userId
                                                 ? "bg-blue-50 border-l-4 border-blue-500"
                                                 : ""
-                                        }`}
+                                            }`}
                                     >
                                         <div className="relative">
                                             <img
@@ -572,7 +571,7 @@ const ChatApp = () => {
                                         </div>
                                         <div className="ml-3 flex-1 min-w-0">
                                             <div className="flex items-center justify-between">
-                                                <div 
+                                                <div
                                                     className="font-medium text-gray-900 truncate cursor-pointer hover:text-blue-600 transition-colors"
                                                     onClick={() => {
                                                         console.log("Selected friend:", friend);
@@ -631,7 +630,7 @@ const ChatApp = () => {
                                 )}
                             </div>
                             <div className="ml-3">
-                                <div 
+                                <div
                                     className="font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
                                     onClick={() => handleProfileClick(selectedFriend.userId || selectedFriend._id)}
                                 >
@@ -742,20 +741,20 @@ const ChatApp = () => {
                                         )}
                                     </div>
                                 ))}
-                                
+
                                 {/* Typing indicator */}
                                 {typingUsers.has(selectedFriend.userId) && (
                                     <div className="flex justify-start">
                                         <div className="bg-white rounded-2xl rounded-bl-md p-3 shadow-sm">
                                             <div className="flex space-x-1">
                                                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                                             </div>
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 <div ref={messagesEndRef} />
                             </div>
                         )}
@@ -768,7 +767,7 @@ const ChatApp = () => {
                                 <div className="text-sm text-gray-600">
                                     Replying to: {replyTo.message.substring(0, 50)}...
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setReplyTo(null)}
                                     className="text-gray-500 hover:text-gray-700"
                                 >
@@ -804,7 +803,7 @@ const ChatApp = () => {
                                     </div>
                                 )}
                             </div>
-                            
+
                             <div className="relative">
                                 <button
                                     type="button"
@@ -833,7 +832,7 @@ const ChatApp = () => {
                                     </div>
                                 )}
                             </div>
-                            
+
                             <input
                                 type="text"
                                 value={message}
@@ -875,7 +874,7 @@ const ChatApp = () => {
                                 <h3 className="text-xl font-semibold">Video Call</h3>
                                 <p className="text-gray-600">Calling {selectedFriend?.name}...</p>
                             </div>
-                            
+
                             <div className="flex justify-center space-x-4">
                                 <button
                                     onClick={endCall}
@@ -905,7 +904,7 @@ const ChatApp = () => {
                                 <h3 className="text-xl font-semibold">Voice Call</h3>
                                 <p className="text-gray-600">Calling {selectedFriend?.name}...</p>
                             </div>
-                            
+
                             <div className="flex justify-center space-x-4">
                                 <button
                                     onClick={endCall}
