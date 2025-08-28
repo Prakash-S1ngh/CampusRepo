@@ -354,7 +354,7 @@ const AlumniDashboard = () => {
                     
                     {/* Connections Tab */}
                     {activeTab === "connections" && (
-                        <UserList 
+                        <ChatApp 
                             users={connections} 
                             title="Alumni Connections" 
                             userType="connections"
@@ -364,7 +364,7 @@ const AlumniDashboard = () => {
                     
                     {/* Faculty Tab */}
                     {activeTab === "faculty" && (
-                        <UserList 
+                        <ChatApp 
                             users={faculty} 
                             title="Faculty Network" 
                             userType="faculty"
@@ -374,7 +374,7 @@ const AlumniDashboard = () => {
                     
                     {/* Juniors Tab */}
                     {activeTab === "juniors" && (
-                        <UserList 
+                        <ChatApp 
                             users={juniors} 
                             title="Junior Students" 
                             userType="students"
