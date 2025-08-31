@@ -70,11 +70,7 @@ const LoginPage = () => {
         const userRole = response.data.user.role;
         if (userRole === 'Director') {
           setTimeout(() => navigate('/director-panel'));
-        } else if (userRole === 'Faculty') {
-          setTimeout(() => navigate('/faculty-dashboard'));
-        } else if (userRole === 'Alumni') {
-          setTimeout(() => navigate('/alumni-dashboard'));
-        } else {
+        }  else {
           setTimeout(() => navigate('/DashBoard'));
         }
       } else {
